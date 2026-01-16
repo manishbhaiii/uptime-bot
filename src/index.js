@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, Events } from 'discord.js';
+import { Client, GatewayIntentBits, Events, ActivityType } from 'discord.js';
 import { config } from 'dotenv';
 import { URLManager } from './managers/urlManager.js';
 import { PingScheduler } from './services/pingScheduler.js';
@@ -25,6 +25,8 @@ client.once(Events.ClientReady, async (c) => {
   
   pingScheduler.start();
   console.log('[INFO] Ping scheduler started (10-minute intervals)');
+  
+  startStatusUpdater(c, urlManager, pingScheduler);
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
@@ -61,5 +63,31 @@ process.on('unhandledRejection', (error) => {
 client.on(Events.Error, (error) => {
   console.error('[ERROR] Discord client error:', error);
 });
+
+function startStatusUpdater(client, urlManager, pingScheduler) {
+  let showUrls = true;
+  
+  const updateStatus = () => {
+    if (showUrls) {
+      const urlCount = urlManager.getTotalURLCount();
+      const pluralUrl = urlCount === 1 ? 'url' : 'urls';
+      client.user.setActivity({
+        name: `${urlCount} ${pluralUrl}`,
+        type: ActivityType.Watching
+      });
+    } else {
+      const cycles = pingScheduler.getCyclesCompleted();
+      const pluralCycle = cycles === 1 ? 'cycle' : 'cycles';
+      client.user.setActivity({
+        name: `${cycles} ${pluralCycle} completed`,
+        type: ActivityType.Watching
+      });
+    }
+    showUrls = !showUrls;
+  };
+  
+  updateStatus();
+  setInterval(updateStatus, 15000);
+}
 
 client.login(process.env.DISCORD_TOKEN);

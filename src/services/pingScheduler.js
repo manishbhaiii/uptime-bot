@@ -7,6 +7,7 @@ export class PingScheduler {
     this.interval = null;
     this.stats = new Map();
     this.PING_INTERVAL = 10 * 60 * 1000;
+    this.cyclesCompleted = 0;
   }
 
   start() {
@@ -51,6 +52,7 @@ export class PingScheduler {
     }
 
     await Promise.allSettled(promises);
+    this.cyclesCompleted++;
     console.log('[INFO] Ping cycle completed');
   }
 
@@ -137,5 +139,9 @@ export class PingScheduler {
   getStats(userId, url) {
     const key = this.getStatsKey(userId, url);
     return this.stats.get(key);
+  }
+
+  getCyclesCompleted() {
+    return this.cyclesCompleted;
   }
 }
